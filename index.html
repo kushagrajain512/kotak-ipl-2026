@@ -154,6 +154,43 @@ select.form-input{cursor:pointer;}
 .rule-title{font-family:'Barlow Condensed',sans-serif;font-size:1rem;color:var(--gold);letter-spacing:.5px;margin-bottom:.4rem;}
 .rule-text{font-size:.82rem;color:var(--muted);line-height:1.65;}
 .prize-card{border-radius:12px;padding:1.25rem;text-align:center;border:1px solid var(--border);background:var(--surface);}
+
+/* ── SYNC BAR ── */
+.sync-bar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);
+  padding:.35rem 1.5rem;display:flex;align-items:center;gap:.6rem;font-size:.74rem;color:var(--muted);z-index:300;}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s;}
+.sync-dot.live{background:var(--green);box-shadow:0 0 5px var(--green);}
+.sync-dot.saving{background:var(--gold);animation:sdpulse .7s infinite;}
+.sync-dot.error{background:var(--red);}
+@keyframes sdpulse{0%,100%{opacity:1}50%{opacity:.3}}
+body{padding-bottom:34px;}
+/* ── SETUP MODAL ── */
+.jb-setup{position:fixed;inset:0;background:rgba(7,9,14,.97);z-index:600;display:flex;align-items:center;justify-content:center;padding:1rem;}
+.jb-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;max-width:500px;width:100%;}
+.jb-title{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;color:var(--gold);letter-spacing:2px;margin-bottom:.35rem;}
+.jb-sub{font-size:.82rem;color:var(--muted);margin-bottom:1.25rem;line-height:1.6;}
+.step-row{display:flex;gap:.5rem;margin-bottom:.65rem;font-size:.82rem;color:var(--muted);line-height:1.5;}
+.step-n{background:var(--gold);color:#000;border-radius:50%;width:20px;height:20px;min-width:20px;
+  display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;}
+.migrate-box{background:var(--surface2);border:1px solid rgba(0,201,167,.3);border-radius:8px;padding:.85rem;margin-top:.85rem;font-size:.8rem;}
+
+
+/* ── BULK IMPORT ── */
+.bulk-import-page{background:var(--surface2);border:2px dashed var(--gold);border-radius:16px;padding:2rem;margin-bottom:2rem;}
+.bulk-title{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px;color:var(--gold);margin-bottom:.35rem;}
+.bulk-sub{font-size:.85rem;color:var(--muted);margin-bottom:1.25rem;line-height:1.7;}
+.bulk-textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:1rem;color:var(--text);font-family:'Inter',monospace;font-size:.82rem;resize:vertical;
+  min-height:260px;line-height:1.7;transition:border .15s;}
+.bulk-textarea:focus{outline:none;border-color:var(--gold);}
+.bulk-result-row{display:flex;align-items:center;gap:.5rem;padding:.35rem .6rem;border-radius:6px;
+  font-size:.8rem;margin-bottom:.25rem;}
+.bulk-ok{background:rgba(18,201,92,.1);color:var(--green);}
+.bulk-warn{background:rgba(245,54,92,.1);color:var(--red);}
+.bulk-info{background:rgba(240,180,41,.08);color:var(--gold);}
+.import-summary{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:1rem;margin-top:1rem;max-height:300px;overflow-y:auto;}
+
 </style>
 </head>
 <body>
@@ -196,6 +233,7 @@ select.form-input{cursor:pointer;}
     <button class="nav-tab" onclick="goPage('players')">🏏 Players</button>
     <button class="nav-tab" onclick="goPage('scores')">📊 Scores</button>
     <button class="nav-tab" onclick="goPage('rules')">📜 Rules</button>
+    <button class="nav-tab admin-only" onclick="goPage('import')" id="import-tab" style="color:var(--accent);border-color:var(--accent)">📥 Import Data</button>
   </div>
 </header>
 
@@ -373,6 +411,64 @@ select.form-input{cursor:pointer;}
     <div class="sec-hdr"><div class="sec-title">BONUS <em>CATEGORIES</em></div></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.65rem;" id="bonus-cats-rules"></div>
   </div>
+
+<!-- PAGE: BULK IMPORT -->
+<div id="page-import" class="page">
+  <div class="container">
+    <div class="bulk-import-page">
+      <div class="bulk-title">📥 BULK IMPORT AUCTION RESULTS</div>
+      <div class="bulk-sub">
+        Lost your auction data? Re-enter all results here in one go.<br>
+        Format: <strong style="color:var(--text)">Player Name, Team Name, Points Paid</strong> — one line per player.<br>
+        Player names must loosely match the database (e.g. "Kohli" or "Virat Kohli" both work).<br>
+        Team names: <span style="color:var(--gold)">The Indian Super Kings · Pocket Aces · Jhakaas XI · The Finishers · Dream Team · Clutch Kings · Wonder Women</span>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.8rem;color:var(--muted)">
+        <strong style="color:var(--text)">Example:</strong><br>
+        <code style="color:var(--accent)">Virat Kohli, The Finishers, 280<br>
+Jasprit Bumrah, Pocket Aces, 200<br>
+Rishabh Pant, Dream Team, 250<br>
+MS Dhoni, Clutch Kings, 150</code>
+      </div>
+
+      <textarea class="bulk-textarea" id="bulk-input" placeholder="Paste your auction results here, one player per line...&#10;&#10;Virat Kohli, The Finishers, 280&#10;Jasprit Bumrah, Pocket Aces, 200&#10;Sanju Samson, Dream Team, 180&#10;..."></textarea>
+
+      <div style="display:flex;gap:.75rem;margin-top:1rem;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-gold btn-lg" onclick="runBulkImport()">📥 Import All Results</button>
+        <button class="btn btn-outline" onclick="previewBulkImport()">👁 Preview First</button>
+        <button class="btn btn-red btn-sm" onclick="clearAllData()">🗑 Reset Everything</button>
+        <span style="font-size:.75rem;color:var(--muted);margin-left:auto">Admin only — password required</span>
+      </div>
+
+      <div id="bulk-preview" style="display:none" class="import-summary">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;letter-spacing:1px;margin-bottom:.75rem;color:var(--text)">IMPORT PREVIEW</div>
+        <div id="bulk-preview-rows"></div>
+      </div>
+
+      <div id="bulk-done-banner" style="display:none;margin-top:1rem;background:rgba(18,201,92,.1);border:1px solid var(--green);border-radius:10px;padding:1rem;text-align:center">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--green);letter-spacing:2px">✅ IMPORT COMPLETE</div>
+        <div id="bulk-done-summary" style="font-size:.85rem;color:var(--muted);margin-top:.35rem"></div>
+        <div style="margin-top:.75rem;display:flex;gap:.65rem;justify-content:center;flex-wrap:wrap">
+          <button class="btn btn-green" onclick="goPage('home')">View Dashboard →</button>
+          <button class="btn btn-accent" onclick="goPage('teams')">View Squads →</button>
+          <button class="btn btn-gold" onclick="goPage('leaderboard')">Leaderboard →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Also optionally mark unsold players -->
+    <div class="card">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;letter-spacing:1px;margin-bottom:.85rem">
+        Mark Unsold Players (optional)
+      </div>
+      <div class="bulk-sub" style="font-size:.8rem">Paste names of players who went unsold — one per line.</div>
+      <textarea class="bulk-textarea" id="unsold-input" placeholder="Deepak Chahar&#10;Prithvi Shaw&#10;..." style="min-height:120px"></textarea>
+      <button class="btn btn-outline btn-sm" style="margin-top:.65rem" onclick="runMarkUnsold()">Mark as Unsold</button>
+    </div>
+  </div>
+</div>
+
 </div>
 
 <!-- MODALS -->
@@ -662,13 +758,220 @@ function buildSubcategories() {
   return shuffle(subs);
 }
 
-function initApp() {
-  // Load state from localStorage
+// ═══════════════════════════════════════════════════
+// JSONBIN — shared cloud state
+// API: https://api.jsonbin.io/v3
+// ═══════════════════════════════════════════════════
+let JB_KEY = '';   // Secret key  ($2b$10$...)
+let JB_BIN = '';   // Bin ID      (24-char hex)
+let jbPollTimer = null;
+let jbLastHash = '';
+let jbSaveTimer = null;
+let jbConnected = false;
+
+const JB_BASE = 'https://api.jsonbin.io/v3';
+
+// ── helpers ───────────────────────────────────────
+function setSyncDot(state, msg) {
+  const dot = document.getElementById('sync-dot');
+  const txt = document.getElementById('sync-txt');
+  if (dot) dot.className = 'sync-dot ' + state;
+  if (txt) txt.textContent = msg;
+}
+
+function buildSnapshot() {
+  return {
+    v: 2,
+    ts: Date.now(),
+    sold: PLAYERS.filter(p=>p.soldTo!==null).map(p=>({
+      pid:p.id, tid:p.soldTo, pts:p.soldFor
+    })),
+    unsold: PLAYERS.filter(p=>p.unsold).map(p=>p.id),
+    rtm: OFFICE_TEAMS.map(t=>t.rtmLeft),
+    bonus: OFFICE_TEAMS.map(t=>t.bonusPts),
+    stats: PLAYERS.filter(p=>p.soldTo!==null).map(p=>({
+      pid:p.id, r:p.runs||0, w:p.wkts||0,
+      f:p.fours||0, s:p.sixes||0, c:p.catches||0
+    }))
+  };
+}
+
+function applySnapshot(sn) {
+  if (!sn || sn.v !== 2) return;
+  // reset
+  PLAYERS.forEach(p=>{ p.soldTo=null; p.soldFor=null; p.unsold=false;
+    p.runs=0; p.wkts=0; p.fours=0; p.sixes=0; p.catches=0; });
+  OFFICE_TEAMS.forEach((t,i)=>{ t.points=3000; t.squad=[]; t.matchPts=0; t.bonusPts=0;
+    t.rtmLeft = t.type==='wonder_women' ? 3 : 2; });
+
+  (sn.sold||[]).forEach(sp=>{
+    const p=PLAYERS[sp.pid], t=OFFICE_TEAMS.find(x=>x.id===sp.tid);
+    if(p&&t){ p.soldTo=sp.tid; p.soldFor=sp.pts;
+      t.points=Math.max(0,t.points-sp.pts);
+      t.squad.push({playerId:sp.pid,ptsSpent:sp.pts,rtmUsed:false}); }
+  });
+  (sn.unsold||[]).forEach(pid=>{ if(PLAYERS[pid]) PLAYERS[pid].unsold=true; });
+  (sn.rtm||[]).forEach((r,i)=>{ if(OFFICE_TEAMS[i]) OFFICE_TEAMS[i].rtmLeft=r; });
+  (sn.bonus||[]).forEach((b,i)=>{ if(OFFICE_TEAMS[i]) OFFICE_TEAMS[i].bonusPts=b; });
+  (sn.stats||[]).forEach(ps=>{
+    const p=PLAYERS[ps.pid];
+    if(p){ p.runs=ps.r||0; p.wkts=ps.w||0; p.fours=ps.f||0;
+      p.sixes=ps.s||0; p.catches=ps.c||0; }
+  });
+}
+
+function refreshUI() {
+  renderHomeTeams(); updateKPIs(); renderTeamWallets(); renderCatBar();
+  rebuildRecentSales();
+  const active = document.querySelector('.page.active');
+  if (!active) return;
+  const pid = active.id.replace('page-','');
+  if (pid==='teams') renderSquads();
+  if (pid==='leaderboard') renderLeaderboard();
+  if (pid==='players') renderPlayersDB();
+  if (pid==='unsold') renderUnsold();
+  if (pid==='scores') renderScoresTable();
+  if (pid==='auction') renderQueue();
+}
+
+function rebuildRecentSales() {
+  const el = document.getElementById('recent-sales');
+  const sold = PLAYERS.filter(p=>p.soldTo!==null).slice(-8).reverse();
+  if (!sold.length) { el.innerHTML='<div style="color:var(--muted);text-align:center;padding:.75rem">No sales yet</div>'; return; }
+  el.innerHTML = sold.map(p=>{
+    const t = OFFICE_TEAMS.find(x=>x.id===p.soldTo);
+    return `<div style="display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid var(--border);font-size:.8rem">
+      <span><strong>${p.name}</strong> → ${t?.name||'?'}</span>
+      <span style="color:var(--gold);font-family:'Barlow Condensed',sans-serif;font-size:1rem">${p.soldFor}pts</span>
+    </div>`;
+  }).join('');
+}
+
+// ── JSONBin API calls ─────────────────────────────
+async function jbRead() {
+  if (!JB_KEY || !JB_BIN) return null;
+  const r = await fetch(`${JB_BASE}/b/${JB_BIN}/latest`, {
+    headers: { 'X-Master-Key': JB_KEY }
+  });
+  if (!r.ok) throw new Error('Read failed: ' + r.status);
+  const j = await r.json();
+  return j.record || null;
+}
+
+async function jbWrite(data) {
+  if (!JB_KEY || !JB_BIN) return;
+  const r = await fetch(`${JB_BASE}/b/${JB_BIN}`, {
+    method: 'PUT',
+    headers: { 'Content-Type':'application/json', 'X-Master-Key': JB_KEY },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error('Write failed: ' + r.status);
+}
+
+async function jbCreate(data) {
+  const r = await fetch(`${JB_BASE}/b`, {
+    method: 'POST',
+    headers: {
+      'Content-Type':'application/json',
+      'X-Master-Key': JB_KEY,
+      'X-Bin-Name': 'kotak-ipl-2026',
+      'X-Bin-Private': 'false'
+    },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error('Create failed: ' + r.status);
+  const j = await r.json();
+  return j.metadata.id;
+}
+
+// ── Polling (every 10s for viewers, 0 for admin who pushes) ─
+function startPolling() {
+  if (jbPollTimer) clearInterval(jbPollTimer);
+  jbPollTimer = setInterval(async () => {
+    if (!jbConnected) return;
+    try {
+      const sn = await jbRead();
+      if (!sn) return;
+      const hash = JSON.stringify(sn.ts || sn);
+      if (hash === jbLastHash) return; // no change
+      jbLastHash = hash;
+      applySnapshot(sn);
+      refreshUI();
+      setSyncDot('live', '🟢 Live — updated ' + new Date(sn.ts||Date.now()).toLocaleTimeString('en-IN'));
+    } catch(e) { setSyncDot('error','Poll error: '+e.message); }
+  }, 10000);  // 10 seconds
+}
+
+// ── Connect flow ──────────────────────────────────
+async function jbConnect() {
+  const btn = document.getElementById('jb-connect-btn');
+  const errEl = document.getElementById('jb-err');
+  JB_KEY = document.getElementById('jb-key').value.trim();
+  const binInput = document.getElementById('jb-bin').value.trim();
+  errEl.style.display = 'none';
+  if (!JB_KEY) { errEl.style.display='block'; errEl.textContent='Secret key is required'; return; }
+  btn.textContent = 'Connecting…'; btn.disabled = true;
+  try {
+    if (binInput) {
+      // Connect to existing bin
+      JB_BIN = binInput;
+      const sn = await jbRead();
+      if (sn) { applySnapshot(sn); jbLastHash = JSON.stringify(sn.ts||sn); }
+    } else {
+      // Create new bin with empty or local data
+      const initData = buildSnapshot();
+      JB_BIN = await jbCreate(initData);
+    }
+    jbConnected = true;
+    localStorage.setItem('jbCfg', JSON.stringify({key:JB_KEY,bin:JB_BIN}));
+    document.getElementById('jb-setup').style.display = 'none';
+    document.getElementById('sync-bar').style.display = 'flex';
+    document.getElementById('bin-id-display').textContent = 'Bin: ' + JB_BIN;
+    setSyncDot('live','🟢 Connected — Bin: ' + JB_BIN);
+    refreshUI();
+    startPolling();
+    notify('✅ Connected to JSONBin! Share your Bin ID: ' + JB_BIN, 'success');
+  } catch(e) {
+    errEl.style.display='block';
+    errEl.textContent = '❌ ' + e.message + ' — check your secret key';
+    btn.textContent = 'Connect →'; btn.disabled = false;
+  }
+}
+
+function jbSkip() {
+  document.getElementById('jb-setup').style.display = 'none';
+  document.getElementById('sync-bar').style.display = 'flex';
+  setSyncDot('error','Local only — data not shared');
+  loadLocalFallback();
+}
+
+function jbShowSettings() {
+  const cfg = localStorage.getItem('jbCfg');
+  if (cfg) {
+    const c = JSON.parse(cfg);
+    document.getElementById('jb-key').value = c.key || '';
+    document.getElementById('jb-bin').value = c.bin || '';
+  }
+  document.getElementById('jb-setup').style.display = 'flex';
+}
+
+async function jbPushLocal() {
+  try {
+    setSyncDot('saving','Pushing local data…');
+    const sn = buildSnapshot();
+    await jbWrite(sn);
+    jbLastHash = JSON.stringify(sn.ts);
+    setSyncDot('live','🟢 Data pushed!');
+    notify('✅ Local data pushed to JSONBin — everyone can now see it', 'success');
+    document.getElementById('jb-migrate-row').style.display = 'none';
+  } catch(e) { notify('Push failed: '+e.message,'error'); }
+}
+
+function loadLocalFallback() {
   try {
     const saved = localStorage.getItem('kotakIPL26');
     if (saved) {
       const s = JSON.parse(saved);
-      if (s.subcategories) subcategories = s.subcategories;
       if (s.soldPlayers) s.soldPlayers.forEach(sp=>{
         const p=PLAYERS[sp.pid];const t=OFFICE_TEAMS.find(x=>x.id===sp.tid);
         if(p&&t){p.soldTo=sp.tid;p.soldFor=sp.pts;t.points-=sp.pts;t.squad.push({playerId:sp.pid,ptsSpent:sp.pts,rtmUsed:sp.rtm||false});}
@@ -677,23 +980,84 @@ function initApp() {
       if (s.teamRTM) s.teamRTM.forEach((r,i)=>{if(OFFICE_TEAMS[i])OFFICE_TEAMS[i].rtmLeft=r;});
       if (s.teamBonusPts) s.teamBonusPts.forEach((b,i)=>{if(OFFICE_TEAMS[i])OFFICE_TEAMS[i].bonusPts=b;});
     }
-  } catch(e){}
-  if (!subcategories.length) subcategories = buildSubcategories();
-  if (cricApiKey) { document.getElementById('api-dot').className='api-dot connected'; document.getElementById('api-txt').textContent='API: Connected'; }
+  } catch(e) {}
 }
 
+// ── initApp ───────────────────────────────────────
+function initApp() {
+  if (!subcategories.length) subcategories = buildSubcategories();
+  if (cricApiKey) {
+    document.getElementById('api-dot').className='api-dot connected';
+    document.getElementById('api-txt').textContent='API: Connected';
+  }
+
+  const saved = localStorage.getItem('jbCfg');
+  if (saved) {
+    try {
+      const c = JSON.parse(saved);
+      JB_KEY = c.key; JB_BIN = c.bin;
+      document.getElementById('jb-key').value = JB_KEY;
+      document.getElementById('jb-bin').value = JB_BIN;
+      document.getElementById('sync-bar').style.display = 'flex';
+      document.getElementById('bin-id-display').textContent = 'Bin: ' + JB_BIN;
+      setSyncDot('saving','Connecting to JSONBin…');
+      // Load latest from cloud
+      jbRead().then(sn => {
+        if (sn) {
+          applySnapshot(sn);
+          jbLastHash = JSON.stringify(sn.ts||sn);
+        }
+        jbConnected = true;
+        setSyncDot('live','🟢 Live — Bin: '+JB_BIN);
+        refreshUI();
+        startPolling();
+      }).catch(e => {
+        setSyncDot('error','Reconnect failed — using local data');
+        loadLocalFallback();
+        refreshUI();
+      });
+    } catch(e) {
+      showJbSetup();
+    }
+  } else {
+    // First time — show setup
+    showJbSetup();
+  }
+}
+
+function showJbSetup() {
+  document.getElementById('jb-setup').style.display = 'flex';
+  document.getElementById('sync-bar').style.display = 'flex';
+  setSyncDot('error','Not connected');
+  if (localStorage.getItem('kotakIPL26')) {
+    document.getElementById('jb-migrate-row').style.display = 'block';
+  }
+  // Still load local so page isn't empty
+  loadLocalFallback();
+}
+
+// ── saveState (called after every admin action) ───
 function saveState() {
+  // Always write local backup
   try {
-    const soldPlayers = PLAYERS.filter(p=>p.soldTo!==null).map(p=>({pid:p.id,tid:p.soldTo,pts:p.soldFor}));
-    const unsoldPlayers = PLAYERS.filter(p=>p.unsold).map(p=>p.id);
-    localStorage.setItem('kotakIPL26', JSON.stringify({
-      subcategories,
-      soldPlayers,
-      unsoldPlayers,
-      teamRTM: OFFICE_TEAMS.map(t=>t.rtmLeft),
-      teamBonusPts: OFFICE_TEAMS.map(t=>t.bonusPts),
-    }));
-  } catch(e){}
+    const sn = buildSnapshot();
+    localStorage.setItem('kotakIPL26', JSON.stringify(sn));
+    // Push to JSONBin with debounce (wait 800ms in case of rapid changes)
+    if (jbConnected && JB_KEY && JB_BIN) {
+      setSyncDot('saving','Saving…');
+      if (jbSaveTimer) clearTimeout(jbSaveTimer);
+      jbSaveTimer = setTimeout(async () => {
+        try {
+          await jbWrite(sn);
+          jbLastHash = JSON.stringify(sn.ts);
+          setSyncDot('live','🟢 Saved — '+new Date().toLocaleTimeString('en-IN'));
+        } catch(e) {
+          setSyncDot('error','Save failed — ' + e.message);
+          notify('⚠️ Cloud save failed: '+e.message,'error');
+        }
+      }, 800);
+    }
+  } catch(e) {}
 }
 
 // ═══════════════════════════════════════════════════
@@ -706,6 +1070,9 @@ function checkAdmin(){
     document.getElementById('admin-btn').textContent='✅ Admin';
     document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');
     notify('Admin access granted','success');
+    // Show import tab prominently
+    const importTab = document.getElementById('import-tab');
+    if(importTab) importTab.style.display='';
   } else {
     document.getElementById('admin-pw-err').style.display='block';
   }
@@ -728,7 +1095,7 @@ function goPage(p){
   document.querySelectorAll('.nav-tab').forEach(el=>el.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
   const tabs=document.querySelectorAll('.nav-tab');
-  const map={home:0,auction:1,unsold:2,teams:3,leaderboard:4,players:5,scores:6,rules:7};
+  const map={home:0,auction:1,unsold:2,teams:3,leaderboard:4,players:5,scores:6,rules:7,import:8};
   if(map[p]!==undefined)tabs[map[p]].classList.add('active');
   if(p==='teams')renderSquads();
   if(p==='leaderboard')renderLeaderboard();
@@ -1285,6 +1652,122 @@ function notify(msg,type='info'){
 // ═══════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════
+// BULK IMPORT
+// ═══════════════════════════════════════════════════
+function fuzzyMatchPlayer(query){
+  const q=query.toLowerCase().replace(/[^a-z0-9 ]/g,'').trim();
+  if(!q)return null;
+  let m=PLAYERS.find(p=>p.name.toLowerCase()===q);if(m)return m;
+  m=PLAYERS.find(p=>p.name.toLowerCase().includes(q));if(m)return m;
+  const qw=q.split(' ').filter(w=>w.length>2);
+  return PLAYERS.find(p=>{
+    const pw=p.name.toLowerCase().replace(/[^a-z0-9 ]/g,'').split(' ');
+    return qw.some(a=>pw.some(b=>b.startsWith(a)||a.startsWith(b)));
+  })||null;
+}
+
+function fuzzyMatchTeam(query){
+  const q=query.toLowerCase().trim();
+  let t=OFFICE_TEAMS.find(t=>t.name.toLowerCase()===q);if(t)return t;
+  t=OFFICE_TEAMS.find(t=>t.name.toLowerCase().includes(q)||q.includes(t.name.toLowerCase().split(' ')[0]));if(t)return t;
+  const qw=q.split(' ').filter(w=>w.length>2);
+  return OFFICE_TEAMS.find(t=>{
+    const tw=t.name.toLowerCase().split(' ');
+    return qw.some(a=>tw.some(b=>b.startsWith(a)));
+  })||null;
+}
+
+function parseBulkLines(text){
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l&&!l.startsWith('#'));
+  const results=[];
+  for(const line of lines){
+    const parts=line.split(/[,|\t]/).map(p=>p.trim()).filter(Boolean);
+    if(parts.length<2){results.push({line,err:'Need Player, Team'});continue;}
+    const pts=parseInt(parts[2])||0;
+    const player=fuzzyMatchPlayer(parts[0]);
+    const team=fuzzyMatchTeam(parts[1]);
+    if(!player){results.push({line,err:`Player not found: "${parts[0]}"`});continue;}
+    if(!team){results.push({line,err:`Team not found: "${parts[1]}"`});continue;}
+    const usePts=pts>0?pts:player.base;
+    const isWarn=pts<1;
+    results.push({line,player,team,pts:usePts,ok:!isWarn,warn:isWarn});
+  }
+  return results;
+}
+
+function previewBulkImport(){
+  if(!isAdmin){notify('Admin login required','error');return;}
+  const text=document.getElementById('bulk-input').value;
+  if(!text.trim()){notify('Paste some data first','info');return;}
+  const parsed=parseBulkLines(text);
+  const preview=document.getElementById('bulk-preview');
+  const rows=document.getElementById('bulk-preview-rows');
+  preview.style.display='block';
+  document.getElementById('bulk-done-banner').style.display='none';
+  const okCount=parsed.filter(r=>r.ok||r.warn).length;
+  const errCount=parsed.filter(r=>r.err&&!r.warn).length;
+  rows.innerHTML=`<div style="display:flex;gap:1rem;margin-bottom:.75rem;flex-wrap:wrap">
+    <span style="color:var(--green);font-weight:600">✅ ${okCount} players ready</span>
+    ${errCount?`<span style="color:var(--red);font-weight:600">❌ ${errCount} errors</span>`:''}
+  </div>`+
+  parsed.map(r=>{
+    if(r.ok)return`<div class="bulk-result-row bulk-ok">✅ <strong>${r.player.name}</strong> → ${r.team.name} for <strong>${r.pts}pts</strong></div>`;
+    if(r.warn)return`<div class="bulk-result-row bulk-info">⚠️ <strong>${r.player.name}</strong> → ${r.team.name} — using base ${r.pts}pts</div>`;
+    return`<div class="bulk-result-row bulk-warn">❌ ${r.err} <span style="opacity:.6">(${r.line})</span></div>`;
+  }).join('');
+}
+
+function runBulkImport(){
+  if(!isAdmin){notify('Admin login required','error');return;}
+  const text=document.getElementById('bulk-input').value;
+  if(!text.trim()){notify('Nothing to import','info');return;}
+  const parsed=parseBulkLines(text);
+  const valid=parsed.filter(r=>r.ok||r.warn);
+  if(!valid.length){notify('No valid entries — check format','error');previewBulkImport();return;}
+  // Full reset
+  PLAYERS.forEach(p=>{p.soldTo=null;p.soldFor=null;p.unsold=false;p.runs=0;p.wkts=0;p.fours=0;p.sixes=0;p.catches=0;});
+  OFFICE_TEAMS.forEach((t)=>{t.points=3000;t.squad=[];t.matchPts=0;t.bonusPts=0;t.rtmLeft=t.type==='wonder_women'?3:2;});
+  let imported=0,skipped=0;
+  for(const r of valid){
+    const p=r.player,t=r.team,pts=r.pts;
+    if(t.squad.length>=13||p.soldTo!==null){skipped++;continue;}
+    p.soldTo=t.id;p.soldFor=pts;
+    t.points=Math.max(0,t.points-pts);
+    t.squad.push({playerId:p.id,ptsSpent:pts,rtmUsed:false});
+    imported++;
+  }
+  saveState();refreshUI();
+  document.getElementById('bulk-done-banner').style.display='block';
+  document.getElementById('bulk-preview').style.display='none';
+  document.getElementById('bulk-done-summary').textContent=
+    `${imported} players assigned across ${OFFICE_TEAMS.filter(t=>t.squad.length>0).length} teams.${skipped?' '+skipped+' skipped.':''}`;
+  notify(`✅ Imported ${imported} players!`,'success');
+}
+
+function runMarkUnsold(){
+  if(!isAdmin){notify('Admin login required','error');return;}
+  const text=document.getElementById('unsold-input').value;
+  if(!text.trim())return;
+  let count=0;
+  text.split('\n').forEach(line=>{
+    const p=fuzzyMatchPlayer(line.trim());
+    if(p&&p.soldTo===null){p.unsold=true;count++;}
+  });
+  saveState();updateKPIs();
+  notify(`Marked ${count} players unsold`,'info');
+}
+
+function clearAllData(){
+  if(!isAdmin){notify('Admin login required','error');return;}
+  if(!confirm('Reset ALL auction data? This cannot be undone.'))return;
+  PLAYERS.forEach(p=>{p.soldTo=null;p.soldFor=null;p.unsold=false;p.runs=0;p.wkts=0;p.fours=0;p.sixes=0;p.catches=0;});
+  OFFICE_TEAMS.forEach((t)=>{t.points=3000;t.squad=[];t.matchPts=0;t.bonusPts=0;t.rtmLeft=t.type==='wonder_women'?3:2;});
+  saveState();refreshUI();
+  notify('All data cleared','info');
+}
+
 window.addEventListener('load',()=>{
   initApp();
   renderHomeTeams();
@@ -1296,5 +1779,47 @@ window.addEventListener('load',()=>{
   renderBonusCatsRules();
 });
 </script>
+
+<!-- JSONBin Setup -->
+<div id="jb-setup" class="jb-setup" style="display:none">
+  <div class="jb-box">
+    <div class="jb-title">📦 CONNECT JSONBIN</div>
+    <div class="jb-sub">Link a free JSONBin to share live auction data with everyone on the floor.</div>
+
+    <div class="step-row"><span class="step-n">1</span><span>Go to <a href="https://jsonbin.io" target="_blank" style="color:var(--gold)">jsonbin.io</a> → Sign up free → Dashboard → API Keys → copy your <strong style="color:var(--text)">Secret Key</strong></span></div>
+    <div class="step-row"><span class="step-n">2</span><span>Paste it below and click <strong style="color:var(--text)">Create &amp; Connect</strong> — a new bin is created automatically.</span></div>
+    <div class="step-row"><span class="step-n">3</span><span>Share the <strong style="color:var(--text)">Bin ID</strong> (shown after connecting) with your team. Others paste the same Secret Key + Bin ID to view live data.</span></div>
+
+    <div class="form-group" style="margin-top:1rem">
+      <label class="form-label">JSONBin Secret Key ($2b$10$…)</label>
+      <input class="form-input" id="jb-key" placeholder="Paste your secret key here">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Bin ID — leave blank to create new (or paste existing)</label>
+      <input class="form-input" id="jb-bin" placeholder="e.g. 665abc1234def56789012345">
+    </div>
+    <div id="jb-err" style="color:var(--red);font-size:.78rem;margin-bottom:.5rem;display:none"></div>
+    <div style="display:flex;gap:.65rem;margin-top:1rem">
+      <button class="btn btn-gold btn-lg" onclick="jbConnect()" style="flex:1" id="jb-connect-btn">Connect →</button>
+      <button class="btn btn-outline" onclick="jbSkip()">Local Only</button>
+    </div>
+    <div class="migrate-box" id="jb-migrate-row" style="display:none">
+      <div style="font-weight:600;color:var(--text);margin-bottom:.35rem">📤 Existing auction data found</div>
+      <div style="color:var(--muted);margin-bottom:.5rem">Push your saved data to JSONBin so everyone can see it immediately.</div>
+      <button class="btn btn-accent btn-sm" onclick="jbPushLocal()">Push my data to JSONBin →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sync bar -->
+<div class="sync-bar" id="sync-bar" style="display:none">
+  <div class="sync-dot" id="sync-dot"></div>
+  <span id="sync-txt">Connecting…</span>
+  <span style="margin-left:auto;gap:.75rem;display:flex;align-items:center">
+    <span id="bin-id-display" style="color:var(--muted);font-size:.7rem"></span>
+    <span style="cursor:pointer;color:var(--gold);font-size:.72rem" onclick="jbShowSettings()">⚙ Settings</span>
+  </span>
+</div>
+
 </body>
 </html>
