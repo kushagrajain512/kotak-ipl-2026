@@ -191,6 +191,64 @@ body{padding-bottom:34px;}
 .import-summary{background:var(--surface);border:1px solid var(--border);border-radius:10px;
   padding:1rem;margin-top:1rem;max-height:300px;overflow-y:auto;}
 
+
+/* ── TEAM SQUAD VIEW (clickable from home) ── */
+.team-detail-overlay{position:fixed;inset:0;background:rgba(7,9,14,.95);z-index:350;
+  display:none;overflow-y:auto;padding:1.5rem;}
+.team-detail-overlay.open{display:block;}
+.tdo-header{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:1.5rem;flex-wrap:wrap;gap:.75rem;}
+.tdo-title{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;color:var(--gold);}
+.tdo-members{font-size:.82rem;color:var(--muted);margin-top:.2rem;}
+.tdo-stats{display:flex;gap:1.5rem;flex-wrap:wrap;}
+.tdo-stat{text-align:center;}
+.tdo-stat-val{font-family:'Barlow Condensed',sans-serif;font-size:1.6rem;line-height:1;}
+.tdo-stat-lbl{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.close-btn{background:var(--surface);border:1px solid var(--border);color:var(--muted);
+  border-radius:8px;padding:.45rem 1rem;cursor:pointer;font-family:'Inter',sans-serif;
+  font-size:.82rem;transition:all .2s;}
+.close-btn:hover{border-color:var(--gold);color:var(--gold);}
+/* Captain / VC badge */
+.captain-badge{background:var(--gold);color:#000;font-size:.58rem;font-weight:800;
+  padding:1px 5px;border-radius:4px;margin-left:.35rem;letter-spacing:.5px;}
+.vc-badge{background:var(--accent);color:#000;font-size:.58rem;font-weight:800;
+  padding:1px 5px;border-radius:4px;margin-left:.35rem;letter-spacing:.5px;}
+/* Player row in team detail */
+.squad-detail-row{display:flex;align-items:center;justify-content:space-between;
+  padding:.6rem .85rem;border-radius:8px;border:1px solid var(--border);
+  margin-bottom:.4rem;background:var(--surface);transition:all .15s;flex-wrap:wrap;gap:.35rem;}
+.squad-detail-row.is-captain{border-color:var(--gold);background:rgba(240,180,41,.06);}
+.squad-detail-row.is-vc{border-color:var(--accent);background:rgba(0,201,167,.05);}
+.squad-detail-row.is-backup{opacity:.6;border-style:dashed;}
+.sdr-left{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+.sdr-name{font-weight:600;font-size:.9rem;}
+.sdr-right{display:flex;align-items:center;gap:.75rem;}
+.sdr-pts{font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;color:var(--accent);}
+.sdr-bid{font-size:.72rem;color:var(--muted);}
+/* Captain selector */
+.cap-selector{display:inline-flex;gap:.3rem;}
+.cap-btn{border:none;border-radius:4px;padding:2px 7px;font-size:.65rem;font-weight:700;
+  cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;letter-spacing:.5px;}
+.cap-btn.set-c{background:rgba(240,180,41,.15);color:var(--gold);}
+.cap-btn.set-c:hover,.cap-btn.set-c.active{background:var(--gold);color:#000;}
+.cap-btn.set-vc{background:rgba(0,201,167,.12);color:var(--accent);}
+.cap-btn.set-vc:hover,.cap-btn.set-vc.active{background:var(--accent);color:#000;}
+.cap-locked-badge{background:rgba(245,54,92,.12);color:var(--red);border:1px solid rgba(245,54,92,.3);
+  border-radius:6px;padding:.2rem .6rem;font-size:.7rem;font-weight:600;}
+/* Score breakdown tooltip */
+.score-breakdown{font-size:.68rem;color:var(--muted);margin-top:.1rem;}
+/* Team card hover */
+.team-card{cursor:pointer;}
+.team-card:hover .team-card-name{color:var(--gold);}
+/* Auto-score panel */
+.auto-score-banner{background:linear-gradient(135deg,rgba(0,201,167,.1),rgba(74,158,255,.1));
+  border:1px solid rgba(0,201,167,.25);border-radius:10px;padding:1rem 1.25rem;
+  margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:.65rem;}
+.auto-score-title{font-family:'Barlow Condensed',sans-serif;font-size:1rem;
+  letter-spacing:1px;color:var(--accent);}
+.last-sync-txt{font-size:.72rem;color:var(--muted);}
+
 </style>
 </head>
 <body>
@@ -379,7 +437,7 @@ body{padding-bottom:34px;}
       <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
         <div class="api-status"><div class="api-dot" id="api-dot"></div><span id="api-txt">API: Not configured</span></div>
         <button class="btn btn-outline btn-sm admin-only" onclick="openApiSettings()">⚙ API Key</button>
-        <button class="btn btn-accent btn-sm admin-only" onclick="fetchScoresAPI()">🔄 Fetch</button>
+        <button class="btn btn-accent btn-sm admin-only" onclick="fetchAndApplyIPLStats()">🔄 Auto-Fetch IPL Stats</button>
         <button class="btn btn-gold btn-sm admin-only" onclick="openManualScores()">✏ Manual Update</button>
       </div>
     </div>
@@ -469,6 +527,42 @@ MS Dhoni, Clutch Kings, 150</code>
   </div>
 </div>
 
+</div>
+
+
+<!-- Team Detail Overlay (clickable from home) -->
+<div id="team-detail-overlay" class="team-detail-overlay">
+  <div style="max-width:900px;margin:0 auto;">
+    <div class="tdo-header">
+      <div>
+        <div class="tdo-title" id="tdo-team-name">—</div>
+        <div class="tdo-members" id="tdo-members">—</div>
+      </div>
+      <div class="tdo-stats" id="tdo-stats"></div>
+      <button class="close-btn" onclick="closeTeamDetail()">✕ Close</button>
+    </div>
+
+    <!-- Captain lock controls -->
+    <div id="tdo-cap-controls" style="background:var(--surface);border:1px solid var(--border);
+      border-radius:10px;padding:1rem;margin-bottom:1.25rem;display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
+        <div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;letter-spacing:1px">
+            SELECT CAPTAIN &amp; VICE-CAPTAIN
+          </div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:.15rem">
+            C = 2× points · VC = 1.5× points · Lock before tournament starts
+          </div>
+        </div>
+        <div style="display:flex;gap:.5rem;align-items:center" id="tdo-lock-area">
+          <button class="btn btn-red btn-sm" onclick="lockCaptains()" id="lock-cap-btn">🔒 Lock C &amp; VC</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Squad list -->
+    <div id="tdo-squad-list"></div>
+  </div>
 </div>
 
 <!-- MODALS -->
@@ -709,12 +803,12 @@ const LAST_YEAR = {
 };
 
 const OFFICE_TEAMS = [
-  {id:1,name:'The Indian Super Kings',members:'Yatharth, Prashant, Dipesh',type:'returning',rtmLeft:2,points:3000,squad:[],matchPts:0,bonusPts:0},
+  {id:1,name:'The Indian Super Kings',members:'Yatharth, Shilpi, Dipesh',type:'returning',rtmLeft:2,points:3000,squad:[],matchPts:0,bonusPts:0},
   {id:2,name:'Pocket Aces',members:'Anush, Tarun, Himanshu',type:'returning',rtmLeft:2,points:3000,squad:[],matchPts:0,bonusPts:0},
-  {id:3,name:'Jhakaas XI',members:'Ramesh, Shreyans, Ashish',type:'returning',rtmLeft:2,points:3000,squad:[],matchPts:0,bonusPts:0},
+  {id:3,name:'Jhakaas XI',members:'Ramesh, Shreyans, Ashish, Dhwani',type:'returning',rtmLeft:2,points:3000,squad:[],matchPts:0,bonusPts:0},
   {id:4,name:'The Finishers',members:'Purva, Arpit, Aditya',type:'returning',rtmLeft:2,points:3000,squad:[],matchPts:0,bonusPts:0},
   {id:5,name:'Dream Team',members:'Yash, Jay, Ashish Teli',type:'returning',rtmLeft:2,points:3000,squad:[],matchPts:0,bonusPts:0},
-  {id:6,name:'Clutch Kings',members:'Gursimrat, Kushagra',type:'returning',rtmLeft:2,points:3000,squad:[],matchPts:0,bonusPts:0},
+  {id:6,name:'Clutch Kings',members:'Gursimrat, Kushagra, Sumit',type:'returning',rtmLeft:2,points:3000,squad:[],matchPts:0,bonusPts:0},
   {id:7,name:'Wonder Women',members:'Sharon, Vidya, Mini, Namita',type:'wonder_women',rtmLeft:3,points:3000,squad:[],matchPts:0,bonusPts:0},
 ];
 
@@ -1768,8 +1862,423 @@ function clearAllData(){
   notify('All data cleared','info');
 }
 
+
+// ═══════════════════════════════════════════════════
+// CHANGE 1: TEAM MEMBERS UPDATE (already in data)
+// ═══════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════
+// CHANGE 2: CLICKABLE TEAM CARDS → TEAM DETAIL VIEW
+// ═══════════════════════════════════════════════════
+let currentDetailTeam = null;
+
+function openTeamDetail(teamId) {
+  const t = OFFICE_TEAMS.find(x => x.id === teamId);
+  if (!t) return;
+  currentDetailTeam = t;
+  document.getElementById('tdo-team-name').textContent = t.name;
+  document.getElementById('tdo-members').textContent = t.members;
+  renderTeamDetailStats(t);
+  renderTeamDetailSquad(t);
+  // Show captain controls only for admin
+  document.getElementById('tdo-cap-controls').style.display = isAdmin ? 'block' : 'none';
+  document.getElementById('team-detail-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeTeamDetail() {
+  document.getElementById('team-detail-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  currentDetailTeam = null;
+}
+
+function renderTeamDetailStats(t) {
+  const spent = t.squad.reduce((a, s) => a + s.ptsSpent, 0);
+  const totalScore = calcTeamScore(t);
+  const el = document.getElementById('tdo-stats');
+  el.innerHTML = [
+    {val: t.points, lbl: 'Pts Left', color: 'var(--gold)'},
+    {val: spent, lbl: 'Pts Spent', color: 'var(--text)'},
+    {val: t.squad.length + '/13', lbl: 'Squad', color: 'var(--text)'},
+    {val: totalScore, lbl: 'Total Score', color: 'var(--accent)'},
+    {val: t.rtmLeft, lbl: 'RTMs', color: 'var(--purple)'},
+  ].map(s => `<div class="tdo-stat">
+    <div class="tdo-stat-val" style="color:${s.color}">${s.val}</div>
+    <div class="tdo-stat-lbl">${s.lbl}</div>
+  </div>`).join('');
+}
+
+function calcTeamScore(t) {
+  // Sort by individual score desc, take top 11 (rest backup)
+  const withScore = t.squad.map(s => {
+    const p = PLAYERS[s.playerId];
+    if (!p) return {s, p, baseScore: 0, finalScore: 0};
+    const base = (p.runs || 0) * 1 + (p.wkts || 0) * 25;
+    const isCap = t.captain === s.playerId;
+    const isVC  = t.viceCaptain === s.playerId;
+    const mult  = isCap ? 2 : isVC ? 1.5 : 1;
+    return {s, p, baseScore: base, finalScore: Math.round(base * mult), isCap, isVC};
+  }).sort((a, b) => b.finalScore - a.finalScore);
+  // Top 11 count
+  return withScore.slice(0, 11).reduce((sum, x) => sum + x.finalScore, 0);
+}
+
+function renderTeamDetailSquad(t) {
+  const el = document.getElementById('tdo-squad-list');
+  if (!t.squad.length) { el.innerHTML = '<div style="color:var(--muted);padding:1rem">No players yet</div>'; return; }
+
+  const locked = t.captainLocked;
+  const capId  = t.captain;
+  const vcId   = t.viceCaptain;
+
+  // Sort: captain first, then VC, then by score desc, backups at end
+  const withScore = t.squad.map((s, idx) => {
+    const p = PLAYERS[s.playerId];
+    const base = p ? (p.runs || 0) * 1 + (p.wkts || 0) * 25 : 0;
+    const isCap = capId === s.playerId;
+    const isVC  = vcId  === s.playerId;
+    const mult  = isCap ? 2 : isVC ? 1.5 : 1;
+    return {s, p, base, final: Math.round(base * mult), isCap, isVC, idx};
+  }).sort((a, b) => {
+    if (a.isCap && !b.isCap) return -1;
+    if (!a.isCap && b.isCap) return 1;
+    if (a.isVC && !b.isVC) return -1;
+    if (!a.isVC && b.isVC) return 1;
+    return b.final - a.final;
+  });
+
+  // Top 11 playing, rest backup
+  el.innerHTML = withScore.map((item, rank) => {
+    const {s, p, base, final, isCap, isVC} = item;
+    const isBackup = rank >= 11;
+    const rowClass = isCap ? 'is-captain' : isVC ? 'is-vc' : isBackup ? 'is-backup' : '';
+    const capBadge = isCap ? '<span class="captain-badge">C</span>' : '';
+    const vcBadge  = isVC  ? '<span class="vc-badge">VC</span>' : '';
+    const mult     = isCap ? '×2' : isVC ? '×1.5' : '';
+    const backupBadge = isBackup ? `<span style="font-size:.62rem;color:var(--purple);margin-left:.3rem">BACKUP</span>` : '';
+
+    // Captain/VC selector buttons (admin only, not locked)
+    let capControls = '';
+    if (isAdmin && !locked) {
+      const cActive = isCap ? 'active' : '';
+      const vActive = isVC  ? 'active' : '';
+      capControls = `<div class="cap-selector">
+        <button class="cap-btn set-c ${cActive}" onclick="setCaptain(${t.id},${s.playerId},event)">${isCap ? '★ C' : 'C'}</button>
+        <button class="cap-btn set-vc ${vActive}" onclick="setViceCaptain(${t.id},${s.playerId},event)">${isVC ? '★ VC' : 'VC'}</button>
+      </div>`;
+    } else if (locked && (isCap || isVC)) {
+      capControls = `<span class="cap-locked-badge">🔒 ${isCap ? 'CAPTAIN' : 'VICE CAPTAIN'}</span>`;
+    }
+
+    const scoreBreak = mult ? `<div class="score-breakdown">${base} × ${mult} = ${final} pts</div>` : `<div class="score-breakdown">${base} pts</div>`;
+
+    return `<div class="squad-detail-row ${rowClass}">
+      <div class="sdr-left">
+        <span class="tag tag-${TAG_MAP[p?.role] || 'bat'}" style="font-size:.6rem">${p?.role?.replace('_',' ') || ''}</span>
+        <div>
+          <span class="sdr-name">${p?.name || '?'}</span>${capBadge}${vcBadge}${backupBadge}
+          ${scoreBreak}
+        </div>
+      </div>
+      <div class="sdr-right">
+        <span style="font-size:.72rem;color:var(--muted)">${p?.team || ''} · bid:${s.ptsSpent}</span>
+        ${capControls}
+        <span class="sdr-pts">${final}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Lock button state
+  const lockBtn = document.getElementById('lock-cap-btn');
+  if (lockBtn) {
+    if (locked) {
+      lockBtn.textContent = '🔒 Locked';
+      lockBtn.disabled = true;
+      lockBtn.style.opacity = '.5';
+    } else {
+      lockBtn.textContent = '🔒 Lock C & VC';
+      lockBtn.disabled = false;
+      lockBtn.style.opacity = '1';
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// CHANGE 3: CAPTAIN / VICE-CAPTAIN SYSTEM
+// ═══════════════════════════════════════════════════
+
+// Initialise captain/vc fields on teams if not present
+function initCaptainFields() {
+  OFFICE_TEAMS.forEach(t => {
+    if (t.captain === undefined)      t.captain = null;
+    if (t.viceCaptain === undefined)  t.viceCaptain = null;
+    if (t.captainLocked === undefined) t.captainLocked = false;
+  });
+}
+
+function setCaptain(teamId, playerId, e) {
+  e && e.stopPropagation();
+  const t = OFFICE_TEAMS.find(x => x.id === teamId);
+  if (!t || t.captainLocked) return;
+  if (t.viceCaptain === playerId) t.viceCaptain = null; // can't be both
+  t.captain = (t.captain === playerId) ? null : playerId; // toggle
+  saveState();
+  renderTeamDetailSquad(t);
+  renderTeamDetailStats(t);
+  refreshUI();
+}
+
+function setViceCaptain(teamId, playerId, e) {
+  e && e.stopPropagation();
+  const t = OFFICE_TEAMS.find(x => x.id === teamId);
+  if (!t || t.captainLocked) return;
+  if (t.captain === playerId) t.captain = null; // can't be both
+  t.viceCaptain = (t.viceCaptain === playerId) ? null : playerId; // toggle
+  saveState();
+  renderTeamDetailSquad(t);
+  renderTeamDetailStats(t);
+  refreshUI();
+}
+
+function lockCaptains() {
+  const t = currentDetailTeam;
+  if (!t) return;
+  if (!t.captain || !t.viceCaptain) {
+    notify('Please select both a Captain and a Vice-Captain first', 'error');
+    return;
+  }
+  if (!confirm('Lock Captain and Vice-Captain for ' + t.name + '? This cannot be undone.')) return;
+  t.captainLocked = true;
+  saveState();
+  renderTeamDetailSquad(t);
+  notify('✅ Captain & Vice-Captain locked for ' + t.name, 'success');
+}
+
+// Override calcTeamScore used in leaderboard
+function recalcMatchPts() {
+  OFFICE_TEAMS.forEach(t => {
+    t.matchPts = calcTeamScore(t);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// CHANGE 4: AUTO SCORE — CricAPI IPL 2026 stats
+// ═══════════════════════════════════════════════════
+
+// Map common name variations to our player names
+function buildPlayerNameIndex() {
+  const idx = {};
+  PLAYERS.forEach(p => {
+    const variants = [
+      p.name.toLowerCase(),
+      p.name.toLowerCase().replace(/\./g,''),
+      p.name.split(' ').slice(-1)[0].toLowerCase(),       // last name
+      p.name.split(' ').slice(0,2).join(' ').toLowerCase(), // first two words
+    ];
+    variants.forEach(v => { if (v.length > 2) idx[v] = p; });
+  });
+  return idx;
+}
+
+async function fetchAndApplyIPLStats() {
+  const key = cricApiKey || localStorage.getItem('cricApiKey') || '';
+  if (!key) {
+    notify('Set your CricAPI key in 📊 Scores → ⚙ API Key first', 'error');
+    return;
+  }
+  setSyncDot('saving', 'Fetching IPL 2026 stats…');
+  notify('Fetching IPL 2026 player stats from CricAPI…', 'info');
+
+  try {
+    // Step 1: Find IPL 2026 series
+    const seriesRes = await fetch(`https://api.cricapi.com/v1/series?apikey=${key}&offset=0`);
+    const seriesData = await seriesRes.json();
+    if (seriesData.status !== 'success') throw new Error(seriesData.reason || 'Series fetch failed');
+
+    const ipl = (seriesData.data || []).find(s =>
+      s.name && s.name.toLowerCase().includes('ipl') &&
+      (s.name.includes('2026') || (s.startDate && s.startDate.includes('2026')))
+    );
+
+    if (!ipl) { notify('IPL 2026 series not found yet — season may not have started', 'info'); setSyncDot('error','IPL 2026 not found'); return; }
+
+    // Step 2: Get series stats
+    const statsRes = await fetch(`https://api.cricapi.com/v1/series_stats?apikey=${key}&id=${ipl.id}`);
+    const statsData = await statsRes.json();
+    if (statsData.status !== 'success') throw new Error('Stats fetch failed');
+
+    const nameIdx = buildPlayerNameIndex();
+    let updated = 0;
+
+    // Process batting stats
+    const batting = statsData.data?.batting || [];
+    batting.forEach(row => {
+      const nameLower = (row.name || '').toLowerCase().replace(/\./g,'');
+      const p = nameIdx[nameLower] ||
+                nameIdx[nameLower.split(' ').slice(-1)[0]] ||
+                nameIdx[nameLower.split(' ').slice(0,2).join(' ')];
+      if (p && p.soldTo !== null) {
+        p.runs    = parseInt(row.r)  || p.runs    || 0;
+        p.fours   = parseInt(row.fours) || p.fours || 0;
+        p.sixes   = parseInt(row.sixes) || p.sixes || 0;
+        p.sr      = parseFloat(row.sr) || p.sr    || 0;
+        updated++;
+      }
+    });
+
+    // Process bowling stats
+    const bowling = statsData.data?.bowling || [];
+    bowling.forEach(row => {
+      const nameLower = (row.name || '').toLowerCase().replace(/\./g,'');
+      const p = nameIdx[nameLower] ||
+                nameIdx[nameLower.split(' ').slice(-1)[0]] ||
+                nameIdx[nameLower.split(' ').slice(0,2).join(' ')];
+      if (p && p.soldTo !== null) {
+        p.wkts    = parseInt(row.w)   || p.wkts   || 0;
+        p.econ    = parseFloat(row.eco) || p.econ  || 0;
+        p.dots    = parseInt(row.dots) || p.dots   || 0;
+        p.bowlAvg = parseFloat(row.avg) || p.bowlAvg || 0;
+        updated++;
+      }
+    });
+
+    recalcMatchPts();
+    calcBonuses();
+    saveState();
+    refreshUI();
+    renderScoresTable();
+
+    const now = new Date().toLocaleString('en-IN');
+    document.getElementById('last-update').textContent = now;
+    localStorage.setItem('lastScoreSync', now);
+    setSyncDot('live', '🟢 Scores updated at ' + new Date().toLocaleTimeString('en-IN'));
+    notify('✅ Updated stats for ' + updated + ' players from CricAPI', 'success');
+
+  } catch(e) {
+    setSyncDot('error', 'Auto-fetch failed');
+    notify('Auto-fetch failed: ' + e.message + '. Use manual update instead.', 'error');
+  }
+}
+
+// Patch existing fetchScoresAPI to use new function
+function fetchScoresAPI() { fetchAndApplyIPLStats(); }
+
+// ═══════════════════════════════════════════════════
+// PATCH: renderHomeTeams — make cards clickable
+// ═══════════════════════════════════════════════════
+function renderHomeTeams() {
+  document.getElementById('home-teams-grid').innerHTML = OFFICE_TEAMS.map(t => {
+    const pct = Math.min(100, (t.points / 3000) * 100);
+    const rtmC = t.type === 'wonder_women' ? 'var(--purple)' : 'var(--accent)';
+    const total = calcTeamScore(t);
+    const capName = t.captain   !== null ? PLAYERS[t.captain]?.name?.split(' ').slice(-1)[0]   : '—';
+    const vcName  = t.viceCaptain !== null ? PLAYERS[t.viceCaptain]?.name?.split(' ').slice(-1)[0] : '—';
+    const lockIcon = t.captainLocked ? '🔒' : '✏️';
+    return `<div class="team-card" onclick="openTeamDetail(${t.id})">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.2rem">
+        <div class="team-card-name">${t.name}</div>
+        <span style="font-size:.62rem;color:${rtmC};font-weight:700">${t.rtmLeft} RTMs</span>
+      </div>
+      <div class="team-card-members">${t.members}</div>
+      <div class="t-stat-row"><span class="t-stat-lbl">Points Left</span><span class="t-stat-val">${t.points}</span></div>
+      <div class="pts-wrap"><div class="pts-bar" style="width:${pct}%"></div></div>
+      <div class="t-stat-row" style="margin-top:.5rem">
+        <span class="t-stat-lbl">Squad</span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem">${t.squad.length}/13</span>
+      </div>
+      <div class="t-stat-row">
+        <span class="t-stat-lbl">Score Pts</span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;color:var(--accent)">${total}</span>
+      </div>
+      <div class="t-stat-row">
+        <span class="t-stat-lbl">${lockIcon} C / VC</span>
+        <span style="font-size:.78rem;color:var(--gold)">${capName} / ${vcName}</span>
+      </div>
+      <div style="margin-top:.6rem;font-size:.68rem;color:var(--muted);text-align:center">
+        Click to view full squad →
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Patch saveState / applySnapshot to include captain data ──────────
+const _origBuildSnapshot = buildSnapshot;
+function buildSnapshot() {
+  const sn = _origBuildSnapshot();
+  sn.captains = OFFICE_TEAMS.map(t => ({
+    cap: t.captain, vc: t.viceCaptain, locked: t.captainLocked
+  }));
+  return sn;
+}
+
+const _origApplySnapshot = applySnapshot;
+function applySnapshot(sn) {
+  _origApplySnapshot(sn);
+  if (sn.captains) {
+    sn.captains.forEach((c, i) => {
+      if (OFFICE_TEAMS[i]) {
+        OFFICE_TEAMS[i].captain      = c.cap    ?? null;
+        OFFICE_TEAMS[i].viceCaptain  = c.vc     ?? null;
+        OFFICE_TEAMS[i].captainLocked = c.locked ?? false;
+      }
+    });
+  }
+  initCaptainFields();
+}
+
+// ── Patch renderScoresTable to show C/VC multiplier ──────────────────
+function renderScoresTable() {
+  const sold = PLAYERS.filter(p => p.soldTo !== null);
+  const el = document.getElementById('scores-table');
+  if (!sold.length) { el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:2rem">No players sold yet</div>'; return; }
+
+  // Build captain lookup
+  const capMap = {}, vcMap = {};
+  OFFICE_TEAMS.forEach(t => {
+    if (t.captain    !== null) capMap[t.captain]    = t;
+    if (t.viceCaptain !== null) vcMap[t.viceCaptain] = t;
+  });
+
+  el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:.78rem">
+    <thead><tr style="border-bottom:1px solid var(--border);color:var(--muted);font-size:.63rem;text-transform:uppercase">
+      <th style="text-align:left;padding:.35rem .45rem">Player</th>
+      <th style="text-align:left;padding:.35rem .45rem">Owned By</th>
+      <th style="text-align:center;padding:.35rem .45rem">Role</th>
+      <th style="text-align:center;padding:.35rem .45rem">R</th>
+      <th style="text-align:center;padding:.35rem .45rem">W</th>
+      <th style="text-align:center;padding:.35rem .45rem">4s</th>
+      <th style="text-align:center;padding:.35rem .45rem">6s</th>
+      <th style="text-align:center;padding:.35rem .45rem">Ct</th>
+      <th style="text-align:center;padding:.35rem .45rem">Mult</th>
+      <th style="text-align:center;padding:.35rem .45rem">Pts</th>
+    </tr></thead>
+    <tbody>${sold.map(p => {
+      const own  = OFFICE_TEAMS.find(t => t.id === p.soldTo);
+      const base = (p.runs||0)*1 + (p.wkts||0)*25;
+      const isCap = capMap[p.id];
+      const isVC  = vcMap[p.id];
+      const mult  = isCap ? 2 : isVC ? 1.5 : 1;
+      const pts   = Math.round(base * mult);
+      const multLabel = isCap ? '<span class="captain-badge">C ×2</span>' : isVC ? '<span class="vc-badge">VC ×1.5</span>' : '×1';
+      return `<tr style="border-bottom:1px solid rgba(34,42,58,.5)${isCap?' background:rgba(240,180,41,.04)':''}${isVC?' background:rgba(0,201,167,.03)':''}">
+        <td style="padding:.4rem .45rem;font-weight:500">${p.name}</td>
+        <td style="padding:.4rem .45rem;color:var(--accent);font-size:.75rem">${own?.name||'—'}</td>
+        <td style="text-align:center;padding:.4rem .45rem"><span class="tag tag-${TAG_MAP[p.role]||'bat'}" style="font-size:.58rem">${p.role?.replace('_',' ')}</span></td>
+        <td style="text-align:center;padding:.4rem .45rem">${p.runs||0}</td>
+        <td style="text-align:center;padding:.4rem .45rem">${p.wkts||0}</td>
+        <td style="text-align:center;padding:.4rem .45rem">${p.fours||0}</td>
+        <td style="text-align:center;padding:.4rem .45rem">${p.sixes||0}</td>
+        <td style="text-align:center;padding:.4rem .45rem">${p.catches||0}</td>
+        <td style="text-align:center;padding:.4rem .45rem">${multLabel}</td>
+        <td style="text-align:center;padding:.4rem .45rem;font-family:'Barlow Condensed',sans-serif;font-size:1.05rem;color:var(--gold);font-weight:bold">${pts}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
 window.addEventListener('load',()=>{
   initApp();
+  initCaptainFields();
   renderHomeTeams();
   renderCatBar();
   renderTeamWallets();
@@ -1777,6 +2286,9 @@ window.addEventListener('load',()=>{
   renderScoresTable();
   updateKPIs();
   renderBonusCatsRules();
+  // Restore last sync time
+  const ls = localStorage.getItem('lastScoreSync');
+  if (ls) document.getElementById('last-update').textContent = ls;
 });
 </script>
 
