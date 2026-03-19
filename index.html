@@ -2271,9 +2271,41 @@ function renderScoresTable() {
   </table>`;
 }
 
+
+// ── Auto-correct known player assignment errors ────────────────────
+function applyPlayerCorrections() {
+  const corrections = [
+    // [wrongPlayerName, correctPlayerName, teamName, bidPts]
+    ['Vaibhav Arora',   'Vaibhav Suryavanshi', 'Dream Team',   520],
+    ['Mukesh Kumar',    'Ashwani Kumar',         'Dream Team',   50],
+    ['Rahul Chahar',    'KL Rahul',              'Clutch Kings', 120],
+    ['Jacob Bethell',   'Jacob Duffy',           'Clutch Kings', 220],
+    ['Urvil Patel',     'Axar Patel',            'Wonder Women', 400],
+    ['Rachin Ravindra', 'Ravindra Jadeja',        'Wonder Women', 460],
+  ];
+  let changed = false;
+  corrections.forEach(([wrongName, correctName, teamName, bidPts]) => {
+    const wrongP   = PLAYERS.find(p => p.name === wrongName);
+    const correctP = PLAYERS.find(p => p.name === correctName);
+    const t        = OFFICE_TEAMS.find(x => x.name === teamName);
+    if (!wrongP || !correctP || !t) return;
+    // Only correct if wrong player is in this team
+    const idx = t.squad.findIndex(s => s.playerId === wrongP.id);
+    if (idx === -1) return;
+    // Remove wrong, add correct
+    t.squad.splice(idx, 1);
+    wrongP.soldTo = null; wrongP.soldFor = null;
+    correctP.soldTo = t.id; correctP.soldFor = bidPts;
+    t.squad.push({ playerId: correctP.id, ptsSpent: bidPts, rtmUsed: false });
+    changed = true;
+  });
+  if (changed) saveState();
+}
+
 window.addEventListener('load',()=>{
   initApp();
   initCaptainFields();
+  applyPlayerCorrections();  // fix any wrong player assignments
   renderHomeTeams();
   renderCatBar();
   renderTeamWallets();
