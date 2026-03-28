@@ -445,7 +445,7 @@ body{padding-bottom:34px;}
       <div id="scores-table" style="overflow-x:auto;"></div>
     </div>
     <div style="text-align:center;color:var(--muted);font-size:.78rem;padding:.75rem">
-      Scores sync via CricAPI after each IPL 2026 match · Last updated: <span id="last-update">Never</span>
+      🔄 Auto-syncs every 4 hours during IPL season · Last updated: <span id="last-update">Never</span>
     </div>
   </div>
 </div>
@@ -455,13 +455,13 @@ body{padding-bottom:34px;}
   <div class="container">
     <div class="sec-hdr"><div class="sec-title">📜 GROUND <em>RULES</em></div></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:1rem;">
-      <div class="rule-card"><div class="rule-title">💰 Entry & Purse</div><div class="rule-text">Each team pays <strong>₹30,000</strong> entry. Every team gets <strong>3,000 bidding points</strong>. Extra 100 pts available @ ₹2,000 once base purse exhausted.</div></div>
+      <div class="rule-card"><div class="rule-title">💰 Entry & Purse</div><div class="rule-text">Each team pays <strong>₹30,000</strong> entry. Every team gets <strong>3,000 bidding points</strong>. Extra 100 pts available @ ₹2,000 once exhausted. <strong>No RTMs</strong> this year.</div></div>
       <div class="rule-card" style="border-color:var(--blue)"><div class="rule-title">👥 Squad Rules</div><div class="rule-text">Maximum <strong>13 players</strong> per squad. Top 11 scores count. 2 extras as backup — if a player exits, backup #12 or #13 scores.</div></div>
       <div class="rule-card" style="border-color:var(--accent)"><div class="rule-title">🏏 No Role Restrictions</div><div class="rule-text">Teams are <strong>role agnostic</strong>. Any combination of batters, bowlers, all-rounders and WKs allowed. No mandatory quotas.</div></div>
       <div class="rule-card" style="border-color:var(--green)"><div class="rule-title">📊 Scoring</div><div class="rule-text"><strong>1 point per run</strong> scored.<br><strong>25 points per wicket</strong> taken.<br>Calculated at end of full IPL 2026 tournament.</div></div>
       <div class="rule-card"><div class="rule-title">⭐ Base Points</div><div class="rule-text">All capped players (Indian internationals + all overseas): <strong>100 pts base</strong><br>Uncapped Indian players: <strong>50 pts base</strong><br>Increment: +10 pts (≤300), +25 pts (>300)</div></div>
-      <div class="rule-card" style="border-color:var(--purple)"><div class="rule-title">🔄 RTM — Old Teams (6)</div><div class="rule-text">Last year's 6 teams each get <strong>2 RTM cards</strong>. Must <strong>match the final bid exactly</strong> to retain a former player.</div></div>
-      <div class="rule-card" style="border-color:var(--red)"><div class="rule-title">👩 Wonder Women RTM</div><div class="rule-text">New team gets <strong>3 RTMs</strong> — only usable on players the <strong>original holding team passes on</strong>.</div></div>
+
+
       <div class="rule-card" style="border-color:var(--gold)"><div class="rule-title">🏆 Prize Split</div><div class="rule-text"><strong>1st:</strong> 50% · <strong>2nd:</strong> 30% · <strong>3rd:</strong> 20%<br>Total kitty = ₹30,000 × teams</div></div>
       <div class="rule-card" style="border-color:var(--orange)"><div class="rule-title">🎁 Bonus KRAs (9 categories)</div><div class="rule-text">9 season-end bonus categories. Each winner gives their team <strong>+50 points</strong>. Qualifying: 100 runs (bat) / 12 overs (bowl)</div></div>
     </div>
@@ -573,7 +573,7 @@ MS Dhoni, Clutch Kings, 150</code>
     <div class="form-group"><label class="form-label">Select Team</label><div class="assign-team-grid" id="assign-team-grid"></div></div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Final Bid (points)</label><input class="form-input" type="number" id="assign-pts" placeholder="e.g. 150"></div>
-      <div class="form-group"><label class="form-label">RTM Used?</label><select class="form-input" id="assign-rtm"><option value="no">No RTM</option><option value="yes">Yes — RTM used</option><option value="ww">Yes — Wonder Women RTM</option></select></div>
+
     </div>
     <div id="assign-warn" style="color:var(--red);font-size:.78rem;margin-bottom:.65rem;display:none"></div>
     <div style="display:flex;gap:.65rem;margin-top:.9rem;">
@@ -602,7 +602,7 @@ MS Dhoni, Clutch Kings, 150</code>
     <div class="form-group"><label class="form-label">Select Team</label><div class="assign-team-grid" id="assign-unsold-team-grid"></div></div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Final Bid (points)</label><input class="form-input" type="number" id="unsold-assign-pts" placeholder="e.g. 50"></div>
-      <div class="form-group"><label class="form-label">RTM Used?</label><select class="form-input" id="unsold-assign-rtm"><option value="no">No RTM</option><option value="yes">Yes — RTM</option></select></div>
+
     </div>
     <div style="display:flex;gap:.65rem;margin-top:.9rem;">
       <button class="btn btn-gold btn-lg" onclick="confirmUnsoldAssign()" style="flex:1">Confirm</button>
@@ -803,13 +803,13 @@ const LAST_YEAR = {
 };
 
 const OFFICE_TEAMS = [
-  {id:1,name:'The Indian Super Kings',members:'Yatharth, Shilpi, Dipesh',type:'returning',rtmLeft:2,points:3000,squad:[],matchPts:0,bonusPts:0},
-  {id:2,name:'Pocket Aces',members:'Anush, Tarun, Himanshu',type:'returning',rtmLeft:2,points:3000,squad:[],matchPts:0,bonusPts:0},
-  {id:3,name:'Jhakaas XI',members:'Ramesh, Shreyans, Ashish, Dhwani',type:'returning',rtmLeft:2,points:3000,squad:[],matchPts:0,bonusPts:0},
-  {id:4,name:'The Finishers',members:'Purva, Arpit, Aditya',type:'returning',rtmLeft:2,points:3000,squad:[],matchPts:0,bonusPts:0},
-  {id:5,name:'Dream Team',members:'Yash, Jay, Ashish Teli',type:'returning',rtmLeft:2,points:3000,squad:[],matchPts:0,bonusPts:0},
-  {id:6,name:'Clutch Kings',members:'Gursimrat, Kushagra, Sumit',type:'returning',rtmLeft:2,points:3000,squad:[],matchPts:0,bonusPts:0},
-  {id:7,name:'Wonder Women',members:'Sharon, Vidya, Mini, Namita',type:'wonder_women',rtmLeft:3,points:3000,squad:[],matchPts:0,bonusPts:0},
+  {id:1,name:'The Indian Super Kings',members:'Yatharth, Shilpi, Dipesh',type:'returning',points:3000,squad:[],matchPts:0,bonusPts:0,captain:229,viceCaptain:141,captainLocked:true},
+  {id:2,name:'Pocket Aces',members:'Anush, Tarun, Himanshu',type:'returning',points:3000,squad:[],matchPts:0,bonusPts:0,captain:199,viceCaptain:223,captainLocked:true},
+  {id:3,name:'Jhakaas XI',members:'Ramesh, Shreyans, Ashish, Dhwani',type:'returning',points:3000,squad:[],matchPts:0,bonusPts:0,captain:4,viceCaptain:0,captainLocked:true},
+  {id:4,name:'The Finishers',members:'Purva, Arpit, Aditya',type:'returning',points:3000,squad:[],matchPts:0,bonusPts:0,captain:224,viceCaptain:130,captainLocked:true},
+  {id:5,name:'Dream Team',members:'Yash, Jay, Ashish Teli',type:'returning',points:3000,squad:[],matchPts:0,bonusPts:0,captain:51,viceCaptain:166,captainLocked:true},
+  {id:6,name:'Clutch Kings',members:'Gursimrat, Kushagra, Sumit',type:'returning',points:3000,squad:[],matchPts:0,bonusPts:0,captain:175,viceCaptain:26,captainLocked:true},
+  {id:7,name:'Wonder Women',members:'Sharon, Vidya, Mini, Namita',type:'wonder_women',points:3000,squad:[],matchPts:0,bonusPts:0,captain:50,viceCaptain:25,captainLocked:true},
 ];
 
 // ═══════════════════════════════════════════════════
@@ -897,7 +897,6 @@ function applySnapshot(sn) {
   PLAYERS.forEach(p=>{ p.soldTo=null; p.soldFor=null; p.unsold=false;
     p.runs=0; p.wkts=0; p.fours=0; p.sixes=0; p.catches=0; });
   OFFICE_TEAMS.forEach((t,i)=>{ t.points=3000; t.squad=[]; t.matchPts=0; t.bonusPts=0;
-    t.rtmLeft=t.type==='wonder_women'?3:2;
     t.captain=null; t.viceCaptain=null; t.captainLocked=false; });
 
   (sn.sold||[]).forEach(sp=>{
@@ -916,9 +915,10 @@ function applySnapshot(sn) {
   });
   if(sn.captains) sn.captains.forEach((c,i)=>{
     if(OFFICE_TEAMS[i]){
-      OFFICE_TEAMS[i].captain=c.cap??null;
-      OFFICE_TEAMS[i].viceCaptain=c.vc??null;
-      OFFICE_TEAMS[i].captainLocked=c.locked??false;
+      // Use snapshot captains if set; otherwise fall back to hardcoded defaults
+      OFFICE_TEAMS[i].captain      = (c.cap  !== null && c.cap  !== undefined) ? c.cap  : OFFICE_TEAMS[i].captain;
+      OFFICE_TEAMS[i].viceCaptain  = (c.vc   !== null && c.vc   !== undefined) ? c.vc   : OFFICE_TEAMS[i].viceCaptain;
+      OFFICE_TEAMS[i].captainLocked = c.locked ?? OFFICE_TEAMS[i].captainLocked;
     }
   });
 }
@@ -1224,7 +1224,7 @@ function renderHomeTeams(){
     return `<div class="team-card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.2rem">
         <div class="team-card-name">${t.name}</div>
-        <span style="font-size:.65rem;color:${rtmC};font-weight:700">${t.rtmLeft} RTMs</span>
+        <span style="font-size:.65rem;color:${rtmC};font-weight:700"></span>
       </div>
       <div class="team-card-members">${t.members}</div>
       <div class="t-stat-row"><span class="t-stat-lbl">Points Left</span><span class="t-stat-val">${t.points}</span></div>
@@ -1405,7 +1405,7 @@ function confirmAssign(){
   if(rtm)t.rtmLeft=Math.max(0,t.rtmLeft-1);
   addRecentSale(p,t,pts,rtm);
   closeModal('modal-assign');
-  notify(`✅ ${p.name} → ${t.name} for ${pts} pts${rtm?' [RTM]':''}`,'success');
+  notify(`✅ ${p.name} → ${t.name} for ${pts} pts`,'success');
   nextPlayer();renderQueue();renderTeamWallets();renderHomeTeams();updateKPIs();saveState();
 }
 
@@ -1414,7 +1414,7 @@ function addRecentSale(p,t,pts,rtm){
   if(el.innerHTML.includes('No sales'))el.innerHTML='';
   const d=document.createElement('div');
   d.style.cssText='display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid var(--border);';
-  d.innerHTML=`<span><strong>${p.name}</strong> → ${t.name}${rtm?' <span style="color:var(--purple)">[RTM]</span>':''}</span><span style="color:var(--gold);font-family:\'Barlow Condensed\',sans-serif;font-size:1rem">${pts}pts</span>`;
+  d.innerHTML=`<span><strong>${p.name}</strong> → ${t.name}</span><span style="color:var(--gold);font-family:\'Barlow Condensed\',sans-serif;font-size:1rem">${pts}pts</span>`;
   el.insertBefore(d,el.firstChild);
 }
 
@@ -1432,7 +1432,7 @@ function renderTeamWallets(){
       </div>
       <div style="display:flex;justify-content:space-between;margin-bottom:.25rem">
         <span style="font-size:.65rem;color:var(--muted)">${t.squad.length}/13 players</span>
-        <span style="font-size:.65rem;color:${rtmC}">${t.rtmLeft} RTMs</span>
+
       </div>
       <div class="pts-wrap"><div class="pts-bar" style="width:${pct}%"></div></div>
     </div>`;
@@ -1521,7 +1521,7 @@ function renderSquads(){
           <div><div style="font-family:'Barlow Condensed',sans-serif;font-size:1.35rem;color:var(--gold)">${t.points}</div><div style="font-size:.62rem;color:var(--muted)">PTS LEFT</div></div>
           <div><div style="font-family:'Barlow Condensed',sans-serif;font-size:1.35rem;color:var(--accent)">${spent}</div><div style="font-size:.62rem;color:var(--muted)">SPENT</div></div>
           <div><div style="font-family:'Barlow Condensed',sans-serif;font-size:1.35rem">${t.squad.length}/13</div><div style="font-size:.62rem;color:var(--muted)">SQUAD</div></div>
-          <div><div style="font-family:'Barlow Condensed',sans-serif;font-size:1.35rem;color:var(--purple)">${t.rtmLeft}</div><div style="font-size:.62rem;color:var(--muted)">RTMs</div></div>
+
           <div><div style="font-family:'Barlow Condensed',sans-serif;font-size:1.35rem;color:var(--green)">${t.matchPts+t.bonusPts}</div><div style="font-size:.62rem;color:var(--muted)">SCORE</div></div>
         </div>
       </div>
@@ -1915,7 +1915,7 @@ function renderTeamDetailStats(t) {
     {val: spent, lbl: 'Pts Spent', color: 'var(--text)'},
     {val: t.squad.length + '/13', lbl: 'Squad', color: 'var(--text)'},
     {val: totalScore, lbl: 'Total Score', color: 'var(--accent)'},
-    {val: t.rtmLeft, lbl: 'RTMs', color: 'var(--purple)'},
+
   ].map(s => `<div class="tdo-stat">
     <div class="tdo-stat-val" style="color:${s.color}">${s.val}</div>
     <div class="tdo-stat-lbl">${s.lbl}</div>
@@ -2096,66 +2096,91 @@ function buildPlayerNameIndex() {
 
 async function fetchAndApplyIPLStats() {
   const key = cricApiKey || localStorage.getItem('cricApiKey') || '';
-  if (!key) {
-    notify('Set your CricAPI key in 📊 Scores → ⚙ API Key first', 'error');
-    return;
-  }
-  setSyncDot('saving', 'Fetching IPL 2026 stats…');
-  notify('Fetching IPL 2026 player stats from CricAPI…', 'info');
+  if (!key) { notify('Set your CricAPI key in 📊 Scores → ⚙ API Key first','error'); return; }
+
+  setSyncDot('saving','Fetching IPL 2026 stats…');
+  notify('Fetching IPL 2026 player stats…','info');
 
   try {
-    // Step 1: Find IPL 2026 series
-    const seriesRes = await fetch(`https://api.cricapi.com/v1/series?apikey=${key}&offset=0`);
-    const seriesData = await seriesRes.json();
-    if (seriesData.status !== 'success') throw new Error(seriesData.reason || 'Series fetch failed');
+    // Step 1: Find IPL 2026 series ID
+    const serRes = await fetch(`https://api.cricapi.com/v1/series?apikey=${key}&offset=0`);
+    const serData = await serRes.json();
+    if (serData.status !== 'success') throw new Error(serData.reason || 'Series fetch failed');
 
-    const ipl = (seriesData.data || []).find(s =>
-      s.name && s.name.toLowerCase().includes('ipl') &&
-      (s.name.includes('2026') || (s.startDate && s.startDate.includes('2026')))
-    );
+    // Look for IPL 2026
+    const ipl = (serData.data||[]).find(s => s.name &&
+      s.name.toLowerCase().includes('ipl') &&
+      (s.name.includes('2026') || (s.startDate||'').includes('2026')));
 
-    if (!ipl) { notify('IPL 2026 series not found yet — season may not have started', 'info'); setSyncDot('error','IPL 2026 not found'); return; }
+    if (!ipl) {
+      notify('IPL 2026 not found in API — season may not have started yet','info');
+      setSyncDot('error','IPL 2026 not found');
+      return;
+    }
 
-    // Step 2: Get series stats
-    const statsRes = await fetch(`https://api.cricapi.com/v1/series_stats?apikey=${key}&id=${ipl.id}`);
-    const statsData = await statsRes.json();
-    if (statsData.status !== 'success') throw new Error('Stats fetch failed');
+    // Step 2: Get batting + bowling stats for the series
+    const stRes = await fetch(`https://api.cricapi.com/v1/series_stats?apikey=${key}&id=${ipl.id}`);
+    const stData = await stRes.json();
+    if (stData.status !== 'success') throw new Error('Stats fetch failed: ' + (stData.reason||''));
 
-    const nameIdx = buildPlayerNameIndex();
+    const batting  = stData.data?.batting  || [];
+    const bowling  = stData.data?.bowling  || [];
+    const fielding = stData.data?.fielding || [];
+
+    // Build fuzzy name index for matching
+    const idx = {};
+    PLAYERS.filter(p => p.soldTo !== null).forEach(p => {
+      const names = [
+        p.name.toLowerCase(),
+        p.name.toLowerCase().replace(/\./g,''),
+        p.name.split(' ').pop().toLowerCase(),
+        p.name.split(' ').slice(0,2).join(' ').toLowerCase(),
+      ];
+      names.forEach(n => { if (n.length > 2 && !idx[n]) idx[n] = p; });
+    });
+
+    function matchName(apiName) {
+      const n = (apiName||'').toLowerCase().replace(/\./g,'').trim();
+      return idx[n] ||
+             idx[n.split(' ').pop()] ||
+             idx[n.split(' ').slice(0,2).join(' ')] ||
+             PLAYERS.find(p => p.soldTo !== null &&
+               p.name.toLowerCase().split(' ').some(w => w.length > 3 && n.includes(w)));
+    }
+
     let updated = 0;
 
-    // Process batting stats
-    const batting = statsData.data?.batting || [];
+    // Batting stats: r=runs, 4s=fours, 6s=sixes, sr=strike rate
     batting.forEach(row => {
-      const nameLower = (row.name || '').toLowerCase().replace(/\./g,'');
-      const p = nameIdx[nameLower] ||
-                nameIdx[nameLower.split(' ').slice(-1)[0]] ||
-                nameIdx[nameLower.split(' ').slice(0,2).join(' ')];
-      if (p && p.soldTo !== null) {
-        p.runs    = parseInt(row.r)  || p.runs    || 0;
-        p.fours   = parseInt(row.fours) || p.fours || 0;
-        p.sixes   = parseInt(row.sixes) || p.sixes || 0;
-        p.sr      = parseFloat(row.sr) || p.sr    || 0;
-        updated++;
-      }
+      const p = matchName(row.name);
+      if (!p) return;
+      p.runs   = parseInt(row.r)    || p.runs   || 0;
+      p.fours  = parseInt(row['4s'])|| p.fours  || 0;
+      p.sixes  = parseInt(row['6s'])|| p.sixes  || 0;
+      p.sr     = parseFloat(row.sr) || p.sr     || 0;
+      updated++;
     });
 
-    // Process bowling stats
-    const bowling = statsData.data?.bowling || [];
+    // Bowling stats: wkts=wickets, eco=economy, avg=bowling avg, dots=dot balls
     bowling.forEach(row => {
-      const nameLower = (row.name || '').toLowerCase().replace(/\./g,'');
-      const p = nameIdx[nameLower] ||
-                nameIdx[nameLower.split(' ').slice(-1)[0]] ||
-                nameIdx[nameLower.split(' ').slice(0,2).join(' ')];
-      if (p && p.soldTo !== null) {
-        p.wkts    = parseInt(row.w)   || p.wkts   || 0;
-        p.econ    = parseFloat(row.eco) || p.econ  || 0;
-        p.dots    = parseInt(row.dots) || p.dots   || 0;
-        p.bowlAvg = parseFloat(row.avg) || p.bowlAvg || 0;
-        updated++;
-      }
+      const p = matchName(row.name);
+      if (!p) return;
+      p.wkts    = parseInt(row.wkts)  || p.wkts    || 0;
+      p.econ    = parseFloat(row.eco) || p.econ    || 0;
+      p.bowlAvg = parseFloat(row.avg) || p.bowlAvg || 0;
+      p.dots    = parseInt(row.dots)  || p.dots    || 0;
+      updated++;
     });
 
+    // Fielding stats: catches
+    fielding.forEach(row => {
+      const p = matchName(row.name);
+      if (!p) return;
+      p.catches = parseInt(row.ct) || p.catches || 0;
+      updated++;
+    });
+
+    // Recalculate scores with C/VC multipliers
     recalcMatchPts();
     calcBonuses();
     saveState();
@@ -2165,14 +2190,32 @@ async function fetchAndApplyIPLStats() {
     const now = new Date().toLocaleString('en-IN');
     document.getElementById('last-update').textContent = now;
     localStorage.setItem('lastScoreSync', now);
-    setSyncDot('live', '🟢 Scores updated at ' + new Date().toLocaleTimeString('en-IN'));
-    notify('✅ Updated stats for ' + updated + ' players from CricAPI', 'success');
+    setSyncDot('live','🟢 Scores synced at ' + new Date().toLocaleTimeString('en-IN'));
+    notify('✅ Updated ' + updated + ' player stat entries from IPL 2026','success');
 
   } catch(e) {
-    setSyncDot('error', 'Auto-fetch failed');
-    notify('Auto-fetch failed: ' + e.message + '. Use manual update instead.', 'error');
+    setSyncDot('error','Fetch failed');
+    notify('Auto-fetch failed: ' + e.message,'error');
+    console.error('fetchAndApplyIPLStats error:', e);
   }
 }
+
+// Schedule auto-fetch after every match (every 4 hours during IPL season)
+function scheduleAutoFetch() {
+  const key = cricApiKey || localStorage.getItem('cricApiKey') || '';
+  if (!key) return;
+  // Auto-fetch on page load if last sync was >4 hours ago
+  const last = localStorage.getItem('lastScoreSync');
+  if (last) {
+    const hoursSince = (Date.now() - new Date(last).getTime()) / 3600000;
+    if (hoursSince > 4) {
+      setTimeout(fetchAndApplyIPLStats, 3000); // 3s after load
+    }
+  }
+  // Then check every 4 hours
+  setInterval(fetchAndApplyIPLStats, 4 * 60 * 60 * 1000);
+}
+
 
 // Patch existing fetchScoresAPI to use new function
 function fetchScoresAPI() { fetchAndApplyIPLStats(); }
@@ -2191,7 +2234,7 @@ function renderHomeTeams() {
     return `<div class="team-card" onclick="openTeamDetail(${t.id})">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.2rem">
         <div class="team-card-name">${t.name}</div>
-        <span style="font-size:.62rem;color:${rtmC};font-weight:700">${t.rtmLeft} RTMs</span>
+
       </div>
       <div class="team-card-members">${t.members}</div>
       <div class="t-stat-row"><span class="t-stat-lbl">Points Left</span><span class="t-stat-val">${t.points}</span></div>
@@ -2271,9 +2314,41 @@ function renderScoresTable() {
   </table>`;
 }
 
+
+// ── Auto-correct known player assignment errors + set captains ─────
+function applyPlayerCorrections() {
+  const corrections = [
+    // [wrongPlayerName, correctPlayerName, teamName, bidPts]
+    ['Vaibhav Arora',   'Vaibhav Suryavanshi', 'Dream Team',   520],
+    ['Mukesh Kumar',    'Ashwani Kumar',         'Dream Team',   50],
+    ['Rahul Chahar',    'KL Rahul',              'Clutch Kings', 120],
+    ['Jacob Bethell',   'Jacob Duffy',           'Clutch Kings', 220],
+    ['Urvil Patel',     'Axar Patel',            'Wonder Women', 400],
+    ['Rachin Ravindra', 'Ravindra Jadeja',        'Wonder Women', 460],
+  ];
+  let changed = false;
+  corrections.forEach(([wrongName, correctName, teamName, bidPts]) => {
+    const wrongP   = PLAYERS.find(p => p.name === wrongName);
+    const correctP = PLAYERS.find(p => p.name === correctName);
+    const t        = OFFICE_TEAMS.find(x => x.name === teamName);
+    if (!wrongP || !correctP || !t) return;
+    // Only correct if wrong player is in this team
+    const idx = t.squad.findIndex(s => s.playerId === wrongP.id);
+    if (idx === -1) return;
+    // Remove wrong, add correct
+    t.squad.splice(idx, 1);
+    wrongP.soldTo = null; wrongP.soldFor = null;
+    correctP.soldTo = t.id; correctP.soldFor = bidPts;
+    t.squad.push({ playerId: correctP.id, ptsSpent: bidPts, rtmUsed: false });
+    changed = true;
+  });
+  if (changed) saveState();
+}
+
 window.addEventListener('load',()=>{
   initApp();
   initCaptainFields();
+  applyPlayerCorrections();  // fix any wrong player assignments
   renderHomeTeams();
   renderCatBar();
   renderTeamWallets();
@@ -2284,6 +2359,8 @@ window.addEventListener('load',()=>{
   // Restore last sync time
   const ls = localStorage.getItem('lastScoreSync');
   if (ls) document.getElementById('last-update').textContent = ls;
+  // Auto-fetch scores if key is set
+  scheduleAutoFetch();
 });
 </script>
 
