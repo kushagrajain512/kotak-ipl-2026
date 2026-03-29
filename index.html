@@ -612,15 +612,67 @@ MS Dhoni, Clutch Kings, 150</code>
     </div>
 
     <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.85rem;margin-bottom:1rem">
-      <div style="font-size:.75rem;color:var(--muted);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:1px">Step 2 — Anthropic API Key</div>
-      <div style="display:flex;gap:.5rem">
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:.5rem;text-transform:uppercase;letter-spacing:1px">Step 2 — Anthropic API Key + Proxy</div>
+      <div style="display:flex;gap:.5rem;margin-bottom:.5rem">
         <input class="form-input" id="ai-api-key" type="password"
           placeholder="sk-ant-api03-..."
           style="flex:1;font-size:.78rem"
           oninput="localStorage.setItem('aiApiKey', this.value)">
         <button class="btn btn-outline btn-sm" onclick="document.getElementById('ai-api-key').type = document.getElementById('ai-api-key').type==='password'?'text':'password'">👁</button>
       </div>
-      <div style="font-size:.7rem;color:var(--muted);margin-top:.3rem">Get yours free at <a href="https://console.anthropic.com" target="_blank" style="color:var(--gold)">console.anthropic.com</a> · Stored locally, never shared</div>
+      <input class="form-input" id="ai-proxy-url"
+        placeholder="Proxy URL: https://your-worker.workers.dev (see setup below)"
+        style="font-size:.75rem;margin-bottom:.35rem"
+        oninput="localStorage.setItem('aiProxyUrl', this.value)">
+      <div style="font-size:.7rem;color:var(--muted)">
+        API key from <a href="https://console.anthropic.com" target="_blank" style="color:var(--gold)">console.anthropic.com</a> · 
+        Proxy needed due to browser CORS · <a href="#" onclick="showProxySetup();return false" style="color:var(--gold)">How to set up free proxy →</a>
+      </div>
+    </div>
+    <!-- Proxy setup instructions (collapsible) -->
+    <div id="proxy-setup-panel" style="display:none;background:var(--surface2);border:1px solid rgba(240,180,41,.2);border-radius:8px;padding:1rem;margin-bottom:1rem;font-size:.8rem">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;color:var(--gold);letter-spacing:1px;margin-bottom:.65rem">FREE CLOUDFLARE PROXY SETUP — 3 MINUTES</div>
+      <div style="color:var(--muted);line-height:1.8">
+        <b style="color:var(--text)">1.</b> Go to <a href="https://workers.cloudflare.com" target="_blank" style="color:var(--gold)">workers.cloudflare.com</a> → sign up free<br>
+        <b style="color:var(--text)">2.</b> Click <b style="color:var(--text)">Create Worker</b> → name it <code style="color:var(--accent)">ipl-proxy</code><br>
+        <b style="color:var(--text)">3.</b> Delete all code and paste the code below → click <b style="color:var(--text)">Deploy</b><br>
+        <b style="color:var(--text)">4.</b> Copy your worker URL (e.g. <code style="color:var(--accent)">https://ipl-proxy.yourname.workers.dev</code>) and paste it above
+      </div>
+      <div style="margin-top:.75rem">
+        <div style="font-size:.72rem;color:var(--muted);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:1px">Worker Code (copy all):</div>
+        <div style="background:#000;border-radius:6px;padding:.75rem;font-family:monospace;font-size:.7rem;color:#a8ff78;overflow-x:auto;white-space:pre;cursor:pointer" onclick="copyWorkerCode(this)" title="Click to copy">export default {
+  async fetch(request) {
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Methods': 'POST,OPTIONS'
+      }});
+    }
+    const body = await request.text();
+    const apiKey = request.headers.get('x-api-key');
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'prompt-caching-2024-07-31'
+      },
+      body
+    });
+    const data = await res.text();
+    return new Response(data, {
+      status: res.status,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  }
+};</div>
+        <div style="font-size:.68rem;color:var(--muted);margin-top:.3rem">Click the code box to copy · Your API key is never stored on the worker</div>
+      </div>
     </div>
 
     <div id="ai-progress" class="ai-progress" style="display:none"><div class="ai-progress-bar" id="ai-progress-bar"></div></div>
@@ -2452,21 +2504,7 @@ function aiSetProgress(pct) {
   if (bar) bar.style.width = pct + '%';
 }
 
-function openAiScoreModal() {
-  if (!isAdmin) { notify('Admin login required', 'error'); return; }
-  // Pre-fill API key if saved
-  const saved = localStorage.getItem('aiApiKey') || '';
-  const inp = document.getElementById('ai-api-key');
-  if (inp && saved) inp.value = saved;
-  // Reset UI
-  document.getElementById('ai-log').style.display = 'none';
-  document.getElementById('ai-log').innerHTML = '';
-  document.getElementById('ai-progress').style.display = 'none';
-  document.getElementById('ai-progress-bar').style.width = '0%';
-  document.getElementById('ai-result-banner').style.display = 'none';
-  document.getElementById('ai-run-btn').disabled = false;
-  openModal('modal-ai-score');
-}
+// openAiScoreModal defined above
 
 // Fetch recent IPL matches from CricAPI
 async function aiFetchMatches() {
@@ -2567,7 +2605,16 @@ Important rules:
   aiLog('Calling Claude AI (web search enabled)...', 'info');
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const proxyUrl = document.getElementById('ai-proxy-url')?.value?.trim()
+                    || localStorage.getItem('aiProxyUrl') || '';
+    const apiEndpoint = proxyUrl || 'https://api.anthropic.com/v1/messages';
+
+    if (!proxyUrl) {
+      aiLog('⚠️ No proxy URL set — direct browser→API call will likely fail due to CORS', 'warn');
+      aiLog('Set up a free Cloudflare proxy (click "How to set up free proxy" link above)', 'warn');
+    }
+
+    const response = await fetch(apiEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2690,6 +2737,46 @@ Important rules:
 
   btn.disabled = false;
   btn.textContent = '🤖 Fetch Scorecard & Update Stats';
+}
+
+
+function showProxySetup() {
+  const panel = document.getElementById('proxy-setup-panel');
+  if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function copyWorkerCode(el) {
+  const text = el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    notify('Worker code copied to clipboard!', 'success');
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    notify('Worker code copied!', 'success');
+  });
+}
+
+function openAiScoreModal() {
+  if (!isAdmin) { notify('Admin login required', 'error'); return; }
+  const savedKey = localStorage.getItem('aiApiKey') || '';
+  const savedProxy = localStorage.getItem('aiProxyUrl') || '';
+  const keyInp = document.getElementById('ai-api-key');
+  const proxyInp = document.getElementById('ai-proxy-url');
+  if (keyInp && savedKey) keyInp.value = savedKey;
+  if (proxyInp && savedProxy) proxyInp.value = savedProxy;
+  document.getElementById('ai-log').style.display = 'none';
+  document.getElementById('ai-log').innerHTML = '';
+  document.getElementById('ai-progress').style.display = 'none';
+  document.getElementById('ai-progress-bar').style.width = '0%';
+  document.getElementById('ai-result-banner').style.display = 'none';
+  document.getElementById('ai-run-btn').disabled = false;
+  document.getElementById('proxy-setup-panel').style.display = 'none';
+  openModal('modal-ai-score');
 }
 
 window.addEventListener('load',()=>{
